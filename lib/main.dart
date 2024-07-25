@@ -1,6 +1,7 @@
 // ignore_for_file: public_member_api_docs, sort_constructors_first
 import 'package:bmi/SocialMedia.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,13 +13,22 @@ class MyApp extends StatelessWidget {
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'Flutter Demo',
-        theme: ThemeData.dark(),
-        home: SocialMedia()
-        // const BMI(title: 'BMI CALCULATOR'),
-        );
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(
+          create: (_) => BMImodel(),
+        ),
+      ],
+      child: MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'Flutter Demo',
+          theme: ThemeData.dark(),
+          home: BMI(
+            title: "BMI",
+          )
+          // const BMI(title: 'BMI CALCULATOR'),
+          ),
+    );
   }
 }
 
@@ -30,23 +40,13 @@ class BMI extends StatefulWidget {
 }
 
 class _BMIState extends State<BMI> {
-  double height = 0;
-  int weight = 10;
-  int age = 0;
-  double bmi = 0;
-  bool female = false;
-  bool male = false;
-
-  double bmicalculate(double height1, int weight1) {
-    height1 = height1 / 100;
-
-    return bmi = weight1 / (height1 * height1);
-  }
-
   @override
   Widget build(BuildContext context) {
+    print("Build");
+    final model = Provider.of<BMImodel>(context, listen: false);
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         title: Text(widget.title),
       ),
       body: SafeArea(
@@ -60,15 +60,7 @@ class _BMIState extends State<BMI> {
                 padding: const EdgeInsets.all(8.0),
                 child: InkWell(
                   onTap: () {
-                    setState(() {
-                      if (male == false) {
-                        female = !female;
-                      }
-                      if (male == true) {
-                        female = true;
-                        male = false;
-                      }
-                    });
+                    model.updatemale();
                   },
                   child: Stack(children: [
                     Container(
@@ -96,7 +88,7 @@ class _BMIState extends State<BMI> {
                       width: 150,
                       decoration: BoxDecoration(
                         color: const Color.fromARGB(255, 37, 32, 32)
-                            .withOpacity(female ? 0.45 : 0.0),
+                            .withOpacity(model.female ? 0.45 : 0.0),
                         borderRadius:
                             const BorderRadius.all(Radius.circular(10)),
                         border: Border.all(
@@ -112,15 +104,7 @@ class _BMIState extends State<BMI> {
                 padding: const EdgeInsets.all(8.0),
                 child: InkWell(
                   onTap: () {
-                    setState(() {
-                      if (female == false) {
-                        male = !male;
-                      }
-                      if (female == true) {
-                        male = true;
-                        female = false;
-                      }
-                    });
+                    model.updatfemale();
                   },
                   child: Stack(children: [
                     Container(
@@ -148,7 +132,7 @@ class _BMIState extends State<BMI> {
                       width: 150,
                       decoration: BoxDecoration(
                         color: const Color.fromARGB(255, 37, 32, 32)
-                            .withOpacity(male ? 0.45 : 0.0),
+                            .withOpacity(model.male ? 0.45 : 0.0),
                         borderRadius:
                             const BorderRadius.all(Radius.circular(10)),
                         border: Border.all(
@@ -182,24 +166,27 @@ class _BMIState extends State<BMI> {
                     "HEIGHT",
                     style: TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
                   ),
-                  Text(
-                    "${height.toInt()}cm",
-                    style: const TextStyle(fontSize: 20),
-                  ),
-                  Slider(
-                    value: height, // Bind value to the height variable
-                    onChanged: (value) {
-                      setState(() {
-                        height = value;
-                      });
-                    },
-                    activeColor: const Color.fromARGB(255, 175, 54, 54),
-                    inactiveColor: const Color.fromARGB(255, 59, 56, 56),
-                    divisions: 200,
-                    label: "${height.toInt()} ", // Show current height as label
-                    max: 200,
-                    min: 0,
-                  )
+                  Consumer<BMImodel>(builder: (context, model, child) {
+                    return Text(
+                      "${model.height.toInt()}cm",
+                      style: const TextStyle(fontSize: 20),
+                    );
+                  }),
+                  Consumer<BMImodel>(builder: (context, val, child) {
+                    return Slider(
+                      value: val.height, // Bind value to the height variable
+                      onChanged: (value) {
+                        val.setvalue(value);
+                      },
+                      activeColor: const Color.fromARGB(255, 175, 54, 54),
+                      inactiveColor: const Color.fromARGB(255, 59, 56, 56),
+                      divisions: 200,
+                      label:
+                          "${val.height.toInt()} ", // Show current height as label
+                      max: 200,
+                      min: 0,
+                    );
+                  })
                 ],
               ),
             ),
@@ -227,24 +214,22 @@ class _BMIState extends State<BMI> {
                         style: TextStyle(
                             fontSize: 25, fontWeight: FontWeight.bold),
                       ),
-                      Text(
-                        "${weight}",
-                        style: const TextStyle(fontSize: 28),
-                      ),
+                      Consumer<BMImodel>(builder: (context, model, child) {
+                        return Text(
+                          "${model.weight}",
+                          style: const TextStyle(fontSize: 28),
+                        );
+                      }),
                       Row(
                         children: [
                           ElevatedButton(
                               onPressed: () {
-                                setState(() {
-                                  if (weight > 10) weight = weight - 1;
-                                });
+                                model.decreaseWeight();
                               },
                               child: const Icon(Icons.remove)),
                           ElevatedButton(
                               onPressed: () {
-                                setState(() {
-                                  weight = weight + 1;
-                                });
+                                model.updateWeight();
                               },
                               child: const Icon(Icons.add))
                         ],
@@ -273,24 +258,22 @@ class _BMIState extends State<BMI> {
                         style: TextStyle(
                             fontSize: 25, fontWeight: FontWeight.bold),
                       ),
-                      Text(
-                        "${age}",
-                        style: const TextStyle(fontSize: 28),
-                      ),
+                      Consumer<BMImodel>(builder: (context, model, child) {
+                        return Text(
+                          "${model.age}",
+                          style: const TextStyle(fontSize: 28),
+                        );
+                      }),
                       Row(
                         children: [
                           ElevatedButton(
                               onPressed: () {
-                                setState(() {
-                                  if (age > 0) age = age - 1;
-                                });
+                                model.decreaseAge();
                               },
                               child: const Icon(Icons.remove)),
                           ElevatedButton(
                               onPressed: () {
-                                setState(() {
-                                  age = age + 1;
-                                });
+                                model.updateAge();
                               },
                               child: const Icon(Icons.add))
                         ],
@@ -310,13 +293,14 @@ class _BMIState extends State<BMI> {
         ),
         backgroundColor: Colors.amber,
         onPressed: () {
-          final calbmi = bmicalculate(height, weight);
-          if (height > 80 && weight >= 10) {
+          final calbmi = model.bmicalculate(model.height, model.weight);
+
+          if (model.height > 80 && model.weight >= 10) {
             Navigator.push(
                 context,
                 MaterialPageRoute(
                     builder: (_) => ResultScreen(
-                          age: age,
+                          age: model.age,
                           bmi: calbmi,
                         )));
           } else {
@@ -329,13 +313,7 @@ class _BMIState extends State<BMI> {
               ),
             );
           }
-          setState(() {
-            weight = 10;
-            height = 0;
-            age = 0;
-            female = false;
-            male = false;
-          });
+          model.reset();
         },
         child: const Center(
           child: Text(
@@ -509,5 +487,75 @@ class ResultScreen extends StatelessWidget {
                 ),
               )),
         ));
+  }
+}
+
+class BMImodel with ChangeNotifier {
+  double height = 0;
+  int weight = 10;
+  int age = 0;
+  double bmi = 0;
+  bool female = false;
+  bool male = false;
+
+  double bmicalculate(double height1, int weight1) {
+    height1 = height1 / 100;
+    notifyListeners();
+    return bmi = weight1 / (height1 * height1);
+  }
+
+  void updatemale() {
+    if (male == false) {
+      female = !female;
+    }
+    if (male == true) {
+      female = true;
+      male = false;
+    }
+    notifyListeners();
+  }
+
+  void setvalue(value) {
+    height = value;
+    notifyListeners();
+  }
+
+  void updatfemale() {
+    if (female == false) {
+      male = !male;
+    }
+    if (female == true) {
+      male = true;
+      female = false;
+    }
+    notifyListeners();
+  }
+
+  void updateWeight() {
+    weight = weight + 1;
+    notifyListeners();
+  }
+
+  void decreaseWeight() {
+    if (weight > 10) weight = weight - 1;
+  }
+
+  void updateAge() {
+    age = age + 1;
+    notifyListeners();
+  }
+
+  void decreaseAge() {
+    if (age > 0) age = age - 1;
+    notifyListeners();
+  }
+
+  void reset() {
+    weight = 10;
+    height = 0;
+    age = 0;
+    female = false;
+    male = false;
+    notifyListeners();
   }
 }
